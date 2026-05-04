@@ -65,7 +65,6 @@
 
 <body>
 
-<!-- NAVBAR -->
 <div class="navbar">
   <h3>Grocery Store</h3>
   <div>
@@ -74,26 +73,20 @@
   </div>
 </div>
 
-<!-- HERO -->
 <div class="hero">
   <h2>Fresh Groceries Delivered</h2>
-  <p>Fruits • Veggies • Snacks • More</p>
 </div>
 
-<!-- AUTH -->
 <div class="auth">
   <h3>Login / Signup</h3>
   <input id="email" placeholder="Email">
   <input id="password" type="password" placeholder="Password">
-
   <button onclick="signup()">Signup</button>
   <button onclick="login()">Login</button>
 </div>
 
-<!-- PRODUCTS -->
 <div id="products" class="grid"></div>
 
-<!-- CART -->
 <div id="cart" class="cart">
   <h3>Your Cart</h3>
   <div id="cartItems"></div>
@@ -103,40 +96,53 @@
 </div>
 
 <script>
-/* ✅ FIXED SUPABASE CLIENT */
 const supabaseClient = supabase.createClient(
   "https://hqspmulzlnxzoshzstkq.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxc3BtdWx6bG54em9zaHpzdGtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4NTg5NTksImV4cCI6MjA5MzQzNDk1OX0.931PQhqvclzK1DwJNtp46sGoYxDD_Kk4bPtdINg7yi4"
 );
 
 let cart = [];
+let loaded = false;
 window.products = [];
 
-/* LOAD PRODUCTS */
+/* LOAD PRODUCTS (SAFE + RETRY) */
 async function loadProducts(){
-  const { data } = await supabaseClient
-    .from("products")
-    .select("*");
+  if(loaded) return;
+  loaded = true;
 
-  window.products = data || [];
+  try {
+    const { data, error } = await supabaseClient
+      .from("products")
+      .select("*");
 
-  let html = "";
+    if(error) throw error;
 
-  data.forEach(p=>{
-    html += `
-      <div class="card">
-        <img src="${p.image}">
-        <h4>${p.name}</h4>
-        <p>₹${p.price}</p>
-        <button onclick="addToCart('${p.id}')">Add</button>
-      </div>
-    `;
-  });
+    window.products = data || [];
 
-  document.getElementById("products").innerHTML = html;
+    let html = "";
+
+    data.forEach(p=>{
+      html += `
+        <div class="card">
+          <img src="${p.image}">
+          <h4>${p.name}</h4>
+          <p>₹${p.price}</p>
+          <button onclick="addToCart('${p.id}')">Add</button>
+        </div>
+      `;
+    });
+
+    document.getElementById("products").innerHTML = html;
+
+  } catch(err){
+    console.log("Retrying...", err.message);
+
+    loaded = false; // allow retry
+    setTimeout(loadProducts, 3000);
+  }
 }
 
-loadProducts();
+window.onload = loadProducts;
 
 /* CART */
 function addToCart(id){
@@ -171,13 +177,13 @@ async function placeOrder(){
   const user = await supabaseClient.auth.getUser();
 
   if(!user.data.user){
-    alert("Please login first");
+    alert("Login first");
     return;
   }
 
   const total = cart.reduce((a,b)=>a+b.price,0);
 
-  await supabaseClient.from("orders").insert([
+  const { error } = await supabaseClient.from("orders").insert([
     {
       user_id: user.data.user.id,
       total_price: total,
@@ -185,32 +191,46 @@ async function placeOrder(){
     }
   ]);
 
+  if(error){
+    alert("Order failed");
+    console.log(error);
+    return;
+  }
+
   alert("Order placed!");
   cart=[];
 }
 
 /* AUTH */
-async function signup(){
+window.signup = async function(){
   const email=document.getElementById("email").value;
   const password=document.getElementById("password").value;
 
-  await supabaseClient.auth.signUp({ email, password });
+  const { error } = await supabaseClient.auth.signUp({ email, password });
 
-  alert("Signup success");
+  if(error){
+    alert(error.message);
+  } else {
+    alert("Signup success");
+  }
 }
 
-async function login(){
+window.login = async function(){
   const email=document.getElementById("email").value;
   const password=document.getElementById("password").value;
 
-  await supabaseClient.auth.signInWithPassword({
+  const { error } = await supabaseClient.auth.signInWithPassword({
     email,password
   });
 
-  alert("Login success");
+  if(error){
+    alert(error.message);
+  } else {
+    alert("Login success");
+  }
 }
 
-async function logout(){
+window.logout = async function(){
   await supabaseClient.auth.signOut();
   alert("Logged out");
 }
