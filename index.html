@@ -103,16 +103,22 @@
 </div>
 
 <script>
-const supabase = supabase.createClient(
+/* ✅ FIXED SUPABASE CLIENT */
+const supabaseClient = supabase.createClient(
   "https://hqspmulzlnxzoshzstkq.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxc3BtdWx6bG54em9zaHpzdGtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4NTg5NTksImV4cCI6MjA5MzQzNDk1OX0.931PQhqvclzK1DwJNtp46sGoYxDD_Kk4bPtdINg7yi4"
 );
 
 let cart = [];
+window.products = [];
 
 /* LOAD PRODUCTS */
 async function loadProducts(){
-  const { data } = await supabase.from("products").select("*");
+  const { data } = await supabaseClient
+    .from("products")
+    .select("*");
+
+  window.products = data || [];
 
   let html = "";
 
@@ -122,7 +128,7 @@ async function loadProducts(){
         <img src="${p.image}">
         <h4>${p.name}</h4>
         <p>₹${p.price}</p>
-        <button onclick='addToCart(${JSON.stringify(p)})'>Add</button>
+        <button onclick="addToCart('${p.id}')">Add</button>
       </div>
     `;
   });
@@ -133,9 +139,12 @@ async function loadProducts(){
 loadProducts();
 
 /* CART */
-function addToCart(product){
+function addToCart(id){
+  const product = window.products.find(p => p.id === id);
+  if(!product) return;
+
   cart.push(product);
-  alert("Added!");
+  alert("Added to cart");
 }
 
 function showCart(){
@@ -159,7 +168,7 @@ function closeCart(){
 
 /* ORDER */
 async function placeOrder(){
-  const user = await supabase.auth.getUser();
+  const user = await supabaseClient.auth.getUser();
 
   if(!user.data.user){
     alert("Please login first");
@@ -168,7 +177,7 @@ async function placeOrder(){
 
   const total = cart.reduce((a,b)=>a+b.price,0);
 
-  await supabase.from("orders").insert([
+  await supabaseClient.from("orders").insert([
     {
       user_id: user.data.user.id,
       total_price: total,
@@ -185,7 +194,7 @@ async function signup(){
   const email=document.getElementById("email").value;
   const password=document.getElementById("password").value;
 
-  await supabase.auth.signUp({ email, password });
+  await supabaseClient.auth.signUp({ email, password });
 
   alert("Signup success");
 }
@@ -194,7 +203,7 @@ async function login(){
   const email=document.getElementById("email").value;
   const password=document.getElementById("password").value;
 
-  await supabase.auth.signInWithPassword({
+  await supabaseClient.auth.signInWithPassword({
     email,password
   });
 
@@ -202,7 +211,7 @@ async function login(){
 }
 
 async function logout(){
-  await supabase.auth.signOut();
+  await supabaseClient.auth.signOut();
   alert("Logged out");
 }
 </script>
