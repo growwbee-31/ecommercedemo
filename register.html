@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register | Online Boss</title>
+  <link rel="stylesheet" href="app.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="brand">Online Boss</div>
+      <nav class="site-nav">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="index.html#shop" class="nav-link">Shop</a>
+        <a href="index.html#cart" class="nav-link">Cart</a>
+        <a href="login.html" class="nav-link">Login</a>
+      </nav>
+    </header>
+
+    <main class="main-content">
+      <section class="section-title">
+        <div>
+          <h1>Register</h1>
+          <p class="notice">Create a new customer account to start shopping.</p>
+        </div>
+      </section>
+
+      <form class="form-card" id="register-form">
+        <label for="register-email">Email</label>
+        <input id="register-email" type="email" placeholder="you@example.com" required />
+        <label for="register-password">Password</label>
+        <input id="register-password" type="password" placeholder="Password" required />
+        <button type="submit" class="button">Register</button>
+        <p>Already have an account? <a href="login.html">Log in</a>.</p>
+        <div id="register-feedback" class="notice"></div>
+      </form>
+    </main>
+
+    <footer class="site-footer">
+      <p>Powered by Supabase authentication.</p>
+    </footer>
+  </div>
+  <script src="auth.js"></script>
+</body>
+</html>
